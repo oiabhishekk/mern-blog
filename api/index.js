@@ -1,8 +1,12 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+var cookieParser = require("cookie-parser");
+
 app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
 app.use(express.json());
+app.use(cookieParser());
+
 const bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
 const PORT = process.env.PORT || 3000;
@@ -49,15 +53,22 @@ app.post("/register", async (req, res) => {
 
 app.post("/login", async (req, res) => {
   const { UserName, Password } = req.body;
-  const userDoc = await User.findOne({ UserName });
+  const userDoc = await User.findOne({ UserName }).maxTimeMS(30000);
   const passok = bcrypt.compareSync(Password, userDoc.Password);
   if (passok) {
     //loggedin
-    jwt.sign({ UserName, id: userDoc._id }, secret, {}, (err, token) => {
-      if (err) throw err;
+    jwt.sign(
+      { UserName, id: userDoc._id },
+      secret,
+      { expiresIn: "1h" },
+      (err, token) => {
+        if (err) throw err;
 
-      res.cookie("token", token).json("ok");
-    });
+        res
+          .cookie("token", token, { sameSite: "None", secure: true })
+          .json({ UserName, id: userDoc._id });
+      }
+    );
   } else {
     res.status(400).json("Wrong credentials");
   }
@@ -73,7 +84,18 @@ app.post("/login", async (req, res) => {
   //   }
 });
 
+app.get("/profile", async (req, res) => {
+  const { token } = req.cookies;
+  jwt.verify(token, secret, {}, (err, info) => {
+    if (err) throw err;
+    res.json(info);
+  });
+});
+
+app.post("/logout", async (req, res) => {
+  res.cookie("token", "", { sameSite: "None", secure: true }).json("ok");
+});
+
 app.listen(PORT, (req, res) => {
   console.log(`App is Listening to the PORT : ${PORT}`);
 });
-//mongodb+srv://as1255093:VrzO3TMlQIHQ1YWQ@cluster1.qe6bg8s.mongodb.net/?retryWrites=true&w=majority

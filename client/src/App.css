@@ -85,6 +85,9 @@ form.login button, form.register button{
 form h1{
   text-align: center;
 }
+nav a{
+  cursor: pointer;
+}
 
 
 

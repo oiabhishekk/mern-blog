@@ -5,7 +5,7 @@ import Header from "./components/Header";
 import { Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import IndexPage from "./Pages/IndexPage";
-import Login from "./Pages/login";
+import Login from "./Pages/Login";
 import RegisterPage from "./Pages/RegisterPage";
 const App = () => {
   return (
